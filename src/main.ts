@@ -1,0 +1,155 @@
+import "./style.css";
+
+import { createApp, Player } from "./render";
+import { config, loadSkin } from "@lib";
+import { Engine, Frame, KeyPress, randomSeed } from "@engine";
+import { Container, TextStyle, Text } from "pixi.js";
+
+(async () => {
+  const app = await createApp();
+  config.texture = await loadSkin("default.png");
+
+  const engine = new Engine({
+    board: { width: 10, height: 20, buffer: 20 },
+    kickTable: "SRS+",
+    options: {
+      b2bChaining: true,
+      comboTable: "multiplier",
+      garbageBlocking: "combo blocking",
+      garbageMultiplier: { value: 1, increase: 0.008, marginTime: 10800 },
+      garbageTargetBonus: "none",
+      spinBonuses: "T-spins",
+      garbageAttackCap: Infinity,
+    },
+    queue: { minLength: 31, seed: randomSeed(), type: "7-bag" },
+    garbage: {
+      cap: { absolute: Infinity, increase: 0, max: 40, value: 8 },
+      boardWidth: 10,
+      garbage: { speed: 20, holeSize: 1 },
+      messiness: { change: 1, nosame: false, timeout: 0, within: 0 },
+      seed: 1700476517,
+    },
+    gravity: { value: 0.02, increase: 0.0025, marginTime: 3600 },
+    handling: {
+      arr: 0,
+      das: 6,
+      dcd: 0,
+      sdf: 41,
+      safelock: true,
+      cancel: false,
+      may20g: true,
+    },
+  });
+
+  const wrapper = new Container();
+  const player = new Player(engine, 28, app);
+  wrapper.addChild(player.container);
+  wrapper.scale.set(0.9, 0.9);
+
+  wrapper.position.set(
+    app.screen.width / 2 - wrapper.width / 2,
+    app.screen.height / 2 - wrapper.height / 2
+  );
+  app.stage.addChild(wrapper);
+
+  const statsStyle = new TextStyle({ fill: 0xffffff, fontSize: 20, fontFamily: "Arial" });
+  const fpsText = new Text({ text: "FPS: 0", style: statsStyle });
+  fpsText.position.set(10, 10);
+  app.stage.addChild(fpsText);
+  const engineFpsText = new Text({ text: "Engine FPS: 0", style: statsStyle });
+  engineFpsText.position.set(10, 40);
+  app.stage.addChild(engineFpsText);
+
+  const keybinds = {
+    rotateCW: ["KeyX", "ArrowUp"],
+    rotateCCW: ["KeyZ"],
+    rotate180: ["ShiftLeft", "KeyA"],
+    moveRight: ["ArrowRight"],
+    moveLeft: ["ArrowLeft"],
+    softDrop: ["ArrowDown"],
+    hardDrop: ["Space"],
+    hold: ["KeyC"],
+    reset: ["KeyR"],
+  };
+
+  const frames: { last: number; queue: Frame[] } = { last: 0, queue: [] };
+
+  const listeners: ["keydown" | "keyup", keyof typeof keybinds, () => void][] = [
+    [
+      "keydown",
+      "reset",
+      () => {
+        engine.initializer.queue.seed = randomSeed();
+        engine.reset();
+      },
+    ],
+  ];
+
+  const keydown = (e: KeyboardEvent) => {
+    if (e.repeat) return;
+    listeners.forEach(([type, key, cb]) => {
+      if (type === "keydown" && keybinds[key].includes(e.code)) cb();
+    });
+    Object.keys(keybinds).forEach((key) => {
+      if (keybinds[key as keyof typeof keybinds].includes(e.code))
+        frames.queue.push({
+          type: "keydown",
+          frame: engine.frame + 1,
+          data: {
+            key: key as KeyPress,
+            subframe:
+              Math.round(
+                Math.min((performance.now() - frames.last) / (1000 / 60), 0.9) * 10
+              ) / 10,
+          },
+        });
+    });
+    // refresh();
+  };
+  const keyup = (e: KeyboardEvent) => {
+    listeners.forEach(([type, key, cb]) => {
+      if (type === "keyup" && keybinds[key].includes(e.code)) cb();
+    });
+    Object.keys(keybinds).forEach((key) => {
+      if (keybinds[key as keyof typeof keybinds].includes(e.code))
+        frames.queue.push({
+          type: "keyup",
+          frame: engine.frame + 1,
+          data: {
+            key: key as KeyPress,
+            subframe:
+              Math.round(
+                Math.min((performance.now() - frames.last) / (1000 / 60), 0.9) * 10
+              ) / 10,
+          },
+        });
+    });
+    // refresh();
+  };
+
+  // const start = performance.now();
+
+  // const t = () => {
+  //   engine.tick(frames.queue.splice(0, frames.queue.length));
+  //   frames.last = performance.now();
+  //   timeout = setTimeout(
+  //     t,
+  //     Math.max(0, ((engine.frame + 1) * 1000) / 60 - (performance.now() - start))
+  //   );
+  //   engineFpsText.text = `Engine FPS: ${Math.round(
+  //     1000 / ((performance.now() - start) / engine.frame)
+  //   )}`;
+  // };
+
+  // let timeout = setTimeout(t, 0);
+
+  window.addEventListener("keydown", keydown);
+  window.addEventListener("keyup", keyup);
+
+  app.ticker.add(() => {
+    engine.tick(frames.queue.splice(0, frames.queue.length));
+    frames.last = performance.now();
+    fpsText.text = `FPS: ${Math.round(app.ticker.FPS)}`;
+    player.update(engine, app);
+  });
+})();
