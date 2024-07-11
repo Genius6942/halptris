@@ -1,5 +1,5 @@
 import { Engine, tetrominoes } from "@engine";
-import { Application, Container, Graphics } from "pixi.js";
+import { Application, applyMatrix, Container, Graphics } from "pixi.js";
 import { createMino } from "./mino";
 import { createBlank } from "./blank";
 
@@ -209,6 +209,7 @@ export class Player {
   }
 
   update(engine: Engine, app: Application) {
+		app;
     this.updateBoard(engine);
     this.updateQueue(engine);
     this.updateHold(engine);
