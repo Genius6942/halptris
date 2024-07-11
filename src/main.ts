@@ -127,7 +127,9 @@ import { Container, TextStyle, Text } from "pixi.js";
     // refresh();
   };
 
-  // const start = performance.now();
+  const start = performance.now();
+
+  // let lastTick = performance.now();
 
   // const t = () => {
   //   engine.tick(frames.queue.splice(0, frames.queue.length));
@@ -136,9 +138,12 @@ import { Container, TextStyle, Text } from "pixi.js";
   //     t,
   //     Math.max(0, ((engine.frame + 1) * 1000) / 60 - (performance.now() - start))
   //   );
-  //   engineFpsText.text = `Engine FPS: ${Math.round(
-  //     1000 / ((performance.now() - start) / engine.frame)
-  //   )}`;
+  //   if (engine.frame % 20 === 19) {
+  //     engineFpsText.text = `Engine FPS: ${Math.round(
+  //       1000 / ((performance.now() - lastTick) / 20)
+  //     )}`;
+  //     lastTick = performance.now();
+  //   }
   // };
 
   // let timeout = setTimeout(t, 0);
@@ -147,7 +152,11 @@ import { Container, TextStyle, Text } from "pixi.js";
   window.addEventListener("keyup", keyup);
 
   app.ticker.add(() => {
-    engine.tick(frames.queue.splice(0, frames.queue.length));
+		const targetFrame= Math.floor((performance.now() - start) / (1000 / 60));
+		const needsTick = targetFrame > engine.frame;
+    while (engine.frame < targetFrame) engine.tick(frames.queue.filter((frame) => frame.frame === engine.frame + 1));
+		if (needsTick) frames.queue.splice(0, frames.queue.length);
+		frames.queue.splice(0, frames.queue.length);
     frames.last = performance.now();
     fpsText.text = `FPS: ${Math.round(app.ticker.FPS)}`;
     player.update(engine, app);
