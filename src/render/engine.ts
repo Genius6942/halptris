@@ -1,5 +1,5 @@
 import { Engine, tetrominoes } from "@engine";
-import { Application, applyMatrix, Container, Graphics } from "pixi.js";
+import { Application, Container, Graphics } from "pixi.js";
 import { createMino } from "./mino";
 import { createBlank } from "./blank";
 
