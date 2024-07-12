@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8,7 +8,12 @@
   </head>
   <body class="h-screen w-screen overflow-hidden">
     <div id="canvas"></div>
-		<div id="dom" class="fixed top-0 left-0 right-0 bottom-0"></div>
+    <div id="dom" class="fixed top-0 left-0 right-0 bottom-0">
+      <div
+        id="screenshot"
+        class="hidden items-center justify-center w-screen h-screen bg-black"
+      ></div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

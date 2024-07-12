@@ -1,7 +1,7 @@
 import "./style.css";
 
 import { createApp, Player } from "./render";
-import { config, loadSkin } from "@lib";
+import { config, loadSkin, selectScreenshot } from "@lib";
 import { Engine, Frame, KeyPress, randomSeed } from "@engine";
 import { Container, TextStyle, Text } from "pixi.js";
 
@@ -46,10 +46,15 @@ import { Container, TextStyle, Text } from "pixi.js";
   wrapper.addChild(player.container);
   wrapper.scale.set(0.9, 0.9);
 
-  wrapper.position.set(
-    app.screen.width / 2 - wrapper.width / 2,
-    app.screen.height / 2 - wrapper.height / 2
-  );
+  const resize = () => {
+    wrapper.position.set(
+      window.innerWidth / 2 - wrapper.width / 2,
+      window.innerHeight / 2 - wrapper.height / 2
+    );
+  };
+  resize();
+  window.addEventListener("resize", resize);
+
   app.stage.addChild(wrapper);
 
   const statsStyle = new TextStyle({ fill: 0xffffff, fontSize: 20, fontFamily: "Arial" });
@@ -104,7 +109,6 @@ import { Container, TextStyle, Text } from "pixi.js";
           },
         });
     });
-    // refresh();
   };
   const keyup = (e: KeyboardEvent) => {
     listeners.forEach(([type, key, cb]) => {
@@ -124,41 +128,28 @@ import { Container, TextStyle, Text } from "pixi.js";
           },
         });
     });
-    // refresh();
   };
-
-  const start = performance.now();
-
-  // let lastTick = performance.now();
-
-  // const t = () => {
-  //   engine.tick(frames.queue.splice(0, frames.queue.length));
-  //   frames.last = performance.now();
-  //   timeout = setTimeout(
-  //     t,
-  //     Math.max(0, ((engine.frame + 1) * 1000) / 60 - (performance.now() - start))
-  //   );
-  //   if (engine.frame % 20 === 19) {
-  //     engineFpsText.text = `Engine FPS: ${Math.round(
-  //       1000 / ((performance.now() - lastTick) / 20)
-  //     )}`;
-  //     lastTick = performance.now();
-  //   }
-  // };
-
-  // let timeout = setTimeout(t, 0);
 
   window.addEventListener("keydown", keydown);
   window.addEventListener("keyup", keyup);
 
+  const start = performance.now();
+
   app.ticker.add(() => {
-		const targetFrame= Math.floor((performance.now() - start) / (1000 / 60));
-		const needsTick = targetFrame > engine.frame;
-    while (engine.frame < targetFrame) engine.tick(frames.queue.filter((frame) => frame.frame === engine.frame + 1));
-		if (needsTick) frames.queue.splice(0, frames.queue.length);
-		frames.queue.splice(0, frames.queue.length);
+    const targetFrame = Math.floor((performance.now() - start) / (1000 / 60));
+    const needsTick = targetFrame > engine.frame;
+    while (engine.frame < targetFrame)
+      engine.tick(frames.queue.filter((frame) => frame.frame === engine.frame + 1));
+    if (needsTick) frames.queue.splice(0, frames.queue.length);
+    frames.queue.splice(0, frames.queue.length);
     frames.last = performance.now();
     fpsText.text = `FPS: ${Math.round(app.ticker.FPS)}`;
     player.update(engine, app);
+  });
+
+  document.addEventListener("keydown", async (e) => {
+    if (e.code === "KeyI" && e.ctrlKey) {
+      console.log(await selectScreenshot());
+    }
   });
 })();
