@@ -1,3 +1,4 @@
+import { getColorGrid, deepCopy } from "@lib";
 import "./style.css";
 
 import { createApp, Player } from "./render";
@@ -149,7 +150,10 @@ import { Container, TextStyle, Text } from "pixi.js";
 
   document.addEventListener("keydown", async (e) => {
     if (e.code === "KeyI" && e.ctrlKey) {
-      console.log(await selectScreenshot());
+      const grid = deepCopy(getColorGrid(await selectScreenshot(), 10)).reverse();
+      while (grid.length < engine.board.fullHeight)
+        grid.push(Array(engine.board.width).fill(0));
+      engine.board.state = grid;
     }
   });
 })();
